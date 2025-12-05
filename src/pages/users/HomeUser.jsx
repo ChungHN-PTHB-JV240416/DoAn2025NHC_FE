@@ -34,7 +34,7 @@ const HomeUser = () => {
       id: 1,
       title: "Xây dựng phần mềm bán điện thoại: Bước đầu tiên để thành công",
       excerpt: "Tìm hiểu các bước cơ bản để phát triển một phần mềm bán điện thoại hiệu quả, từ thiết kế giao diện đến tích hợp API.",
-      thumbnail: '../image/webdongho.png',
+      thumbnail: '../image/webdienthoai.jpg',
       createdAt: '2025-04-09',
     },
     {
@@ -48,7 +48,7 @@ const HomeUser = () => {
       id: 3,
       title: "Tích hợp thanh toán trực tuyến cho phần mềm bán điện thoại",
       excerpt: "Hướng dẫn chi tiết cách tích hợp các cổng thanh toán như VNPay, MoMo vào phần mềm bán điện thoại.",
-      thumbnail: '../image/Thumb2-VNpay-800x450-640x360.jpg',
+      thumbnail: '../image/Thumb2-VNpay.jpg',
       createdAt: '2025-03-29',
     },
   ];

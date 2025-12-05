@@ -99,7 +99,7 @@ const AdminLayout = () => {
               '--logo-color': isDarkMode ? '#fff' : '#1a73e8',
             }}
           >
-            Watch Store Admin
+            Phone Store Admin
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {currentUser && currentUser.username ? (
