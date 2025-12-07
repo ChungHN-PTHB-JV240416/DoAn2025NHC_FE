@@ -4,76 +4,58 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { BASE_URL } from '../api/index';
 import Banner from './Banner';
-import HeaderUser from '../pages/users/HeaderUser';
-import FooterUser from '../pages/users/FooterUser';
 import ProductModal from '../components/ProductModal';
 import { toast } from 'react-toastify';
-import { addToCart } from '../redux/reducers/CartSlice'; // Import addToCart từ Redux
+import { addToCart } from '../redux/reducers/CartSlice';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/CategoryProductsPageUser.scss';
+
+// KHÔNG IMPORT HEADER/FOOTER VÌ ĐÃ CÓ TRONG LAYOUT
 
 const CategoryProductsPageUser = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  
   const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [errorProducts, setErrorProducts] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Fake Blog data
   const blogPosts = [
-    {
-      id: 1,
-      title: "Chính sách bảo hành điện thoại 5 năm cả lỗi người dùng",
-      date: "30/11/2023",
-      image: "/image/baohanhdienthoai.jpg", // Sửa đường dẫn
-      description: "Vui lòng mượn đem đến cho Quý khách hàng sự AN TÂM tuyệt đối khi mua điện thoại, đội ngũ APHONE đã xây...",
-    },
-    {
-      id: 2,
-      title: "8/3: Mua điện thoại nữ - Tặng món quà thanh xuân!",
-      date: "01/21/2023",
-      image: "/image/quaphunu.jpg", // Sửa đường dẫn
-      description: "8/3 này, chúc em đi ra đi vào sức khỏe dồi dào",
-    },
-    {
-      id: 3,
-      title: "Thông báo: APHONE Hà Đông chuyển địa điểm mới!",
-      date: "04/02/2025",
-      image: "/image/chuyendiadiem.jpg", // Sửa đường dẫn
-      description: "Nhằm mang đến một không gian khách hàng trang, hiện đại hơn giúp anh em có những trải nghiệm tuyệt vời...",
-    },
-    {
-      id: 4,
-      title: "APHONE thông báo lịch nghỉ Tết At Tý 2025!",
-      date: "30/11/2023",
-      image: "/image/lichnghitet.jpg", // Sửa đường dẫn
-      description: "Nhân dịp Tết Nguyên Đán At Tý 2025, APHONE trân trọng thông báo đến Quý khách hàng lịch nghỉ Tết của...",
-    },
+    { id: 1, title: "Chính sách bảo hành", date: "30/11/2023", image: "/image/baohanhdienthoai.jpg", description: "An tâm tuyệt đối..." },
+    { id: 2, title: "Quà tặng 8/3", date: "01/21/2023", image: "/image/quaphunu.jpg", description: "Món quà thanh xuân..." },
+    { id: 3, title: "Chuyển địa điểm", date: "04/02/2025", image: "/image/chuyendiadiem.jpg", description: "Không gian sang trọng..." },
+    { id: 4, title: "Lịch nghỉ Tết", date: "30/11/2023", image: "/image/lichnghitet.jpg", description: "Thông báo lịch nghỉ..." },
   ];
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+    if (!isAuthenticated) { 
+        navigate('/login'); 
+        return; 
     }
 
     const fetchProducts = async () => {
-      setLoadingProducts(true);
-      setErrorProducts(null);
+      setLoading(true);
       try {
+        // [ĐÃ SỬA]: Dùng đúng endpoint số nhiều 'categories' giống code cũ của bạn
         const response = await BASE_URL.get(`/products/categories/${categoryId}`);
-        setProducts(response.data.content || response.data);
-        setLoadingProducts(false);
+        
+        console.log("Dữ liệu category trả về:", response.data); // Debug xem có dữ liệu không
+        
+        // Xử lý dữ liệu trả về (hỗ trợ cả dạng phân trang .content và dạng mảng thường)
+        const productList = response.data.content || response.data || [];
+        setProducts(productList);
+
       } catch (err) {
-        setErrorProducts('Không thể tải danh sách sản phẩm.');
-        setLoadingProducts(false);
-        console.error('Lỗi khi lấy sản phẩm:', err.response?.data || err.message);
+        console.error('Lỗi tải sản phẩm:', err);
+      } finally { 
+        setLoading(false); 
       }
     };
-
+    
     fetchProducts();
   }, [categoryId, isAuthenticated, navigate]);
 
@@ -82,122 +64,73 @@ const CategoryProductsPageUser = () => {
       const response = await BASE_URL.get(`/products/${productId}`);
       setSelectedProduct(response.data);
       setShowModal(true);
-    } catch (error) {
-      console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
-      toast.error('Không thể tải chi tiết sản phẩm!', { position: 'top-right', autoClose: 3000 });
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedProduct(null);
+    } catch { toast.error('Lỗi tải chi tiết'); }
   };
 
   const handleAddToCart = (productId) => {
-    if (!isAuthenticated) {
-      toast.warning('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-      return;
-    }
-
-    const userId = user?.userId;
-    if (!userId) {
-      toast.error('Không tìm thấy thông tin người dùng!', { position: 'top-right', autoClose: 3000 });
-      return;
-    }
-
-    const requestDTO = { productId, quantity: 1 };
-    dispatch(addToCart({ userId, requestDTO }))
-      .unwrap()
-      .then(() => {
-        toast.success('Đã thêm sản phẩm vào giỏ hàng!', { position: 'top-right', autoClose: 3000 });
-      })
-      .catch((error) => {
-        toast.error('Không thể thêm sản phẩm vào giỏ hàng!', { position: 'top-right', autoClose: 3000 });
-        console.error('Lỗi khi thêm vào giỏ hàng:', error);
-      });
+    if (!user?.userId) { toast.error('Lỗi user!'); return; }
+    dispatch(addToCart({ userId: user.userId, requestDTO: { productId, quantity: 1 } }))
+      .unwrap().then(() => toast.success('Đã thêm vào giỏ!'))
+      .catch(() => toast.error('Lỗi thêm giỏ hàng'));
   };
 
-  if (loadingProducts) return <div>Đang tải...</div>;
+  if (loading) return <div className="text-center py-5">Đang tải dữ liệu...</div>;
 
   return (
-    <div>
-      <HeaderUser />
+    <div className="bg-light">
       <Banner />
-      <Container className="category-products-page">
-        <h1>
-          {categoryId === '1' ? 'MAN PHONE' : categoryId === '2' ? 'GIRL PHONE' : 'COUPLE'}
+      <Container className="category-products-page py-5">
+        <h1 className="text-center mb-5 text-uppercase fw-bold text-primary">
+          {/* Logic hiển thị tên danh mục tạm thời */}
+          {categoryId === '1' ? 'PHONE Main Zin' : categoryId === '2' ? 'PHONE Sách Tay' : 'Danh mục sản phẩm'}
         </h1>
-        {errorProducts ? (
-          <div className="text-center text-danger">{errorProducts}</div>
-        ) : (
+        
+        {products.length > 0 ? (
           <Row>
-            {products.length > 0 ? (
-              products.map((product) => (
-                <Col md={4} key={product.productId} className="mb-4">
-                  <Card className="product-card">
-                    <Card.Img variant="top" src={product.image} alt={product.productName} />
-                    <Card.Body>
-                      <Card.Title>{product.productName}</Card.Title>
-                      <Card.Text className="product-specs">
-                        {product.specs || 'Bentley Nam - 40mm - Kính Sapphire'}
-                      </Card.Text>
-                      <Card.Text className="product-price">
-                        Giá: {product.unitPrice.toLocaleString('vi-VN')} VNĐ
-                      </Card.Text>
-                      {product.originalPrice && (
-                        <Card.Text className="product-original-price">
-                          Giá gốc: {product.originalPrice.toLocaleString('vi-VN')} VNĐ
-                        </Card.Text>
-                      )}
-                      <Button
-                        variant="primary"
-                        className="view-detail-btn"
-                        onClick={() => handleViewDetail(product.productId)}
-                      >
-                        Xem chi tiết
-                      </Button>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))
-            ) : (
-              <Col>
-                <p className="text-center">Không có sản phẩm nào cho danh mục này.</p>
+            {products.map((product) => (
+              <Col md={4} sm={6} key={product.productId} className="mb-4">
+                <Card className="product-card h-100 shadow-sm border-0">
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                      <Card.Img 
+                        variant="top" 
+                        src={product.image} 
+                        style={{ height: '220px', objectFit: 'contain' }} 
+                        onError={(e)=>e.target.src='https://via.placeholder.com/200'} 
+                      />
+                  </div>
+                  <Card.Body className="d-flex flex-column bg-white">
+                    <Card.Title className="fw-bold">{product.productName}</Card.Title>
+                    <Card.Text className="text-danger fw-bold fs-5 mb-3">{product.unitPrice?.toLocaleString()} VNĐ</Card.Text>
+                    <Button variant="outline-primary" className="w-100 mt-auto rounded-pill" onClick={() => handleViewDetail(product.productId)}>Xem chi tiết</Button>
+                  </Card.Body>
+                </Card>
               </Col>
-            )}
+            ))}
           </Row>
+        ) : (
+            <div className="text-center text-muted py-5">
+                <h4>Chưa có sản phẩm nào trong danh mục này.</h4>
+            </div>
         )}
 
-        {blogPosts.length > 0 && (
-          <div className="blog-section mt-5">
-            <h2>Kiến thức điện thoại</h2>
-            <Row>
-              {blogPosts.map((post) => (
-                <Col md={3} key={post.id} className="mb-4">
-                  <Card className="blog-card">
-                    <Card.Img variant="top" src={post.image} alt={post.title} />
-                    <Card.Body>
-                      <Card.Title>{post.title}</Card.Title>
-                      <Card.Subtitle className="mb-2 text-muted">{post.date}</Card.Subtitle>
-                      <Card.Text>{post.description}</Card.Text>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </div>
-        )}
+        <div className="blog-section mt-5 pt-5 border-top">
+          <h2 className="text-center mb-4">Kiến thức điện thoại</h2>
+          <Row>
+            {blogPosts.map((post) => (
+              <Col md={3} sm={6} key={post.id} className="mb-4">
+                <Card className="blog-card h-100 shadow-sm border-0">
+                  <Card.Img variant="top" src={post.image} style={{ height: '180px', objectFit: 'cover' }} onError={(e)=>e.target.src='https://via.placeholder.com/180'} />
+                  <Card.Body>
+                    <Card.Title className="fs-6 fw-bold">{post.title}</Card.Title>
+                    <Card.Subtitle className="mb-2 text-muted small">{post.date}</Card.Subtitle>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
       </Container>
-
-      <ProductModal
-        showModal={showModal}
-        handleCloseModal={handleCloseModal}
-        selectedProduct={selectedProduct}
-        onAddToCart={handleAddToCart}
-      />
-
-      <FooterUser />
+      <ProductModal showModal={showModal} handleCloseModal={()=>setShowModal(false)} selectedProduct={selectedProduct} onAddToCart={handleAddToCart} />
     </div>
   );
 };

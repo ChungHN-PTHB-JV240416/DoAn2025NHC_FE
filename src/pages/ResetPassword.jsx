@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { resetPassword } from '../redux/reducers/GmailSlice';
 import { Form, Input, Button, Typography, ConfigProvider } from 'antd';
+import { KeyOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -11,156 +12,72 @@ const ResetPassword = () => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, successMessage } = useSelector((state) => state.gmail);
+  const { loading } = useSelector((state) => state.gmail);
 
   const handleSubmit = async (values) => {
-    const result = await dispatch(
-      resetPassword({ token: values.token, newPassword: values.newPassword })
-    );
+    const result = await dispatch(resetPassword({ token: values.token, newPassword: values.newPassword }));
     if (resetPassword.fulfilled.match(result)) {
-      toast.success(result.payload || 'Mật khẩu đã được đặt lại thành công!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success('Đặt lại mật khẩu thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } else {
-      toast.error(result.payload || 'Đã xảy ra lỗi khi đặt lại mật khẩu', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error(result.payload || 'Lỗi đặt lại mật khẩu');
     }
   };
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: '#1a73e8',
-          borderRadius: 8,
-          colorText: '#fff',
-          colorBgContainer: 'rgba(255, 255, 255, 0.1)',
-          colorBorder: 'rgba(255, 255, 255, 0.3)',
-          controlHeight: 40,
-          colorError: '#ff4d4f',
-        },
-        components: {
-          Form: {
-            labelColor: '#fff',
-            itemMarginBottom: 16,
-            labelFontSize: 14,
-          },
-          Input: {
-            colorBgContainer: 'rgba(255, 255, 255, 0.2)',
-            colorTextPlaceholder: 'rgba(255, 255, 255, 0.7)',
-            colorBorder: 'rgba(255, 255, 255, 0.3)',
-            hoverBorderColor: 'rgba(255, 255, 255, 0.5)',
-            activeBorderColor: 'rgba(255, 255, 255, 0.5)',
-          },
-          Button: {
-            primaryShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-          },
-        },
-      }}
-    >
-      <div
-        style={{
+    <ConfigProvider theme={{ token: { colorPrimary: '#1a73e8' } }}>
+      <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '100vh',
-          backgroundImage: 'url(https://png.pngtree.com/thumb_back/fh260/background/20230713/pngtree-d-render-of-an-orange-colored-interior-design-store-selling-mobile-image_3860073.jpg)',
+          minHeight: '100vh',
+          backgroundImage: 'url(url(https://thumua24h.vn/wp-content/uploads/2018/11/banner-thu-mua-dien-thoai-1-1400x700.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           position: 'relative',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0, 0, 0, 0.3)',
-          }}
-        />
-        <div
-          style={{
-            width: 400,
-            padding: 32,
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: 16,
-            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
+      }}>
+        {/* Lớp phủ đen mờ */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.4)',
+        }} />
+
+        {/* Box Form Trắng */}
+        <div style={{
             position: 'relative',
             zIndex: 1,
-            textAlign: 'center',
-          }}
-        >
-          <Title
-            level={2}
-            style={{
-              color: '#fff',
-              marginBottom: 24,
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            Đặt lại mật khẩu
-          </Title>
-          <Form form={form} onFinish={handleSubmit} layout="vertical">
-            <Form.Item
-              label={<Text style={{ color: '#fff' }}>Mã xác nhận</Text>}
-              name="token"
-              validateStatus={error ? 'error' : ''}
-              help={error && <Text style={{ color: '#ff4d4f' }}>{error}</Text>}
-              rules={[{ required: true, message: 'Vui lòng nhập mã xác nhận!' }]}
-            >
-              <Input placeholder="Nhập mã xác nhận từ email" disabled={loading} />
+            width: 400,
+            padding: '40px 30px',
+            background: '#fff', // Nền trắng thuần
+            borderRadius: 16,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 30 }}>
+             <Title level={3} style={{ color: '#1a73e8', margin: 0 }}>Đặt lại mật khẩu</Title>
+             <Text type="secondary">Nhập mã xác nhận từ email và mật khẩu mới</Text>
+          </div>
+
+          <Form form={form} onFinish={handleSubmit} layout="vertical" size="large">
+            <Form.Item name="token" rules={[{ required: true, message: 'Nhập mã xác nhận!' }]}>
+              <Input prefix={<KeyOutlined />} placeholder="Mã xác nhận (Token)" />
             </Form.Item>
-            <Form.Item
-              label={<Text style={{ color: '#fff' }}>Mật khẩu mới</Text>}
-              name="newPassword"
-              validateStatus={error ? 'error' : ''}
-              help={error && <Text style={{ color: '#ff4d4f' }}>{error}</Text>}
-              rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' },
-              ]}
-            >
-              <Input.Password placeholder="Nhập mật khẩu mới" disabled={loading} />
+
+            <Form.Item name="newPassword" rules={[{ required: true, min: 6, message: 'Ít nhất 6 ký tự!' }]}>
+              <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu mới" />
             </Form.Item>
+
             <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                block
-                disabled={loading}
-                style={{
-                  height: 40,
-                  fontSize: 16,
-                  fontWeight: 500,
-                }}
-              >
-                {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+              <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 45, fontWeight: 600 }}>
+                Xác nhận
               </Button>
             </Form.Item>
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Text style={{ color: '#fff', fontSize: 14 }}>
-                Quay lại{' '}
-                <Link
-                  to="/login"
-                  style={{
-                    color: '#1a73e8',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                  }}
-                  onMouseEnter={(e) => (e.target.style.textDecoration = 'underline')}
-                  onMouseLeave={(e) => (e.target.style.textDecoration = 'none')}
-                >
-                  Đăng nhập
-                </Link>
-              </Text>
+
+            <div style={{ textAlign: 'center', marginTop: 15 }}>
+              <Link to="/login" style={{ color: '#1a73e8', fontWeight: 'bold' }}>Quay lại đăng nhập</Link>
             </div>
           </Form>
         </div>

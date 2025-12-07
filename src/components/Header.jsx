@@ -3,94 +3,145 @@ import { Container, Navbar, Nav } from 'react-bootstrap';
 import { FiPhone } from 'react-icons/fi';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { logout } from '../services/authService';
-import '../styles/Header.scss';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state) => state.auth);
 
-  const handleLogout = async () => {
-    if (!isAuthenticated) {
-      toast.warning('Bạn chưa đăng nhập!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-      return;
-    }
-
-    try {
-      await logout();
-      toast.success('Đăng xuất thành công!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-    } catch (error) {
-      toast.error('Đăng xuất thất bại!', { position: 'top-right', autoClose: 3000 });
-      console.log(error);
-    }
-  };
-
-  const handleUserClick = () => {
-    if (!isAuthenticated) {
-      toast.warning('Đăng xuất!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-    } else {
-      handleLogout();
-    }
-  };
-
-  const handleRestrictedClick = (path) => {
-    if (!isAuthenticated) {
-      toast.warning('Vui lòng đăng nhập để sử dụng chức năng này!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-    } else {
-      navigate(path);
-    }
+  // Hàm chặn truy cập cho các mục cần bảo mật (Lịch sử, Giỏ hàng)
+  const handleRestrictedClick = () => {
+    toast.info('Vui lòng đăng nhập để sử dụng tính năng này!', { position: 'top-right', autoClose: 3000 });
+    navigate('/login');
   };
 
   return (
-    <Navbar expand="lg" className="header">
-      <Container>
-        <Navbar.Brand href="/" className="logo">  
-        <img
-        src="/image/anhthuonghieuA.jpg" // Đường dẫn đến file trong public/image
-        alt="APHONE Logo"
-        className="logo-img"
-        style={{ height: '40px', marginRight: '10px' }} // Điều chỉnh kích thước và khoảng cách
-      />
-          <span className="logo-A">A</span>PHONE
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="mx-auto nav-links">
-            <Nav.Link href="/">Về Alone Phone</Nav.Link>
-            <Nav.Link onClick={() => handleRestrictedClick('/brands')}>Thương hiệu</Nav.Link>
-            <Nav.Link href="/categories/1">MAN PHONE</Nav.Link> 
-            <Nav.Link href="/categories/2">GIRL PHONE</Nav.Link> 
-            <Nav.Link href="/categories/3">COUPLE</Nav.Link> {/* Tạm thời, có thể thay đổi */}
-            <Nav.Link onClick={handleRestrictedClick} href="/user/history">Order history</Nav.Link>
-          </Nav>
+    <>
+      <style>
+        {`
+            .floating-navbar {
+                padding: 15px 0 !important;
+                background: transparent !important; 
+                transition: none !important;
+                z-index: 1030;
+            }
+            .custom-container {
+                background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%) !important;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 50px !important; 
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+                padding: 8px 30px !important;
+                width: 100%;
+            }
+            .nav-link-modern {
+                color: rgba(255, 255, 255, 0.85) !important;
+                font-weight: 600;
+                margin: 0 15px;
+                position: relative;
+                font-size: 15px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                cursor: pointer;
+                text-decoration: none;
+            }
+            .nav-link-modern:hover {
+                color: #ffffff !important;
+                text-shadow: 0 0 10px rgba(255,255,255,0.6);
+            }
+            .brand-text {
+                font-weight: 800;
+                font-size: 24px;
+                background: linear-gradient(to right, #fbbf24, #f59e0b); 
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                letter-spacing: 1px;
+                margin-left: 12px;
+            }
+            .action-btn {
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,255,255,0.1);
+                margin-left: 12px;
+                cursor: pointer;
+                border: 1px solid rgba(255,255,255,0.1);
+                overflow: hidden; 
+                transition: all 0.3s ease;
+            }
+            .action-btn:hover {
+                background: rgba(255,255,255,0.25);
+                border-color: rgba(255,255,255,0.5);
+            }
+            .cart-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: #ef4444;
+                color: white;
+                font-size: 10px;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid #1e293b;
+                font-weight: bold;
+            }
+        `}
+      </style>
 
-          <div className="navbar-icons">
-            <div className="hotline">
-              <FiPhone className="icon" />
-              <span>0965804364</span>
+      <Navbar expand="lg" fixed="top" className="floating-navbar">
+        <Container className="custom-container">
+          <Navbar.Brand href="/" className="d-flex align-items-center">
+            <div style={{ width: 38, height: 38, background: 'white', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 3 }}>
+              <img src="/image/anhthuonghieuA.jpg" alt="Logo" style={{ width: '100%', borderRadius: 6 }} />
             </div>
-            <div className="cart">
-              <FaShoppingCart className="icon" />
-              <span className="cart-count">0</span>
+            <span className="brand-text">APHONE</span>
+          </Navbar.Brand>
+
+          <Navbar.Toggle aria-controls="basic-navbar-nav" style={{ filter: 'invert(1)' }} />
+
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="mx-auto">
+              <Nav.Link href="/" className="nav-link-modern">Trang chủ</Nav.Link>
+              
+              {/* Cho phép khách truy cập */}
+              <Nav.Link href="/brands" className="nav-link-modern">Thương hiệu</Nav.Link>
+              <Nav.Link href="/categories/1" className="nav-link-modern">Phone Main Zin</Nav.Link>
+              <Nav.Link href="/categories/2" className="nav-link-modern">Phone Sách Tay</Nav.Link>
+              
+              {/* Bắt buộc đăng nhập */}
+              <Nav.Link onClick={handleRestrictedClick} className="nav-link-modern">Lịch sử</Nav.Link>
+            </Nav>
+
+            <div className="d-flex align-items-center">
+              <div className="d-none d-xl-flex align-items-center me-4" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
+                <FiPhone style={{ marginRight: 8 }} />
+                <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>0965.804.364</span>
+              </div>
+
+              {/* Cart Button (Giả - Bắt login) */}
+              <div className="action-btn" onClick={handleRestrictedClick}>
+                <div style={{ position: 'relative' }}>
+                  <FaShoppingCart color="#fff" size={18} />
+                  <span className="cart-badge">0</span>
+                </div>
+              </div>
+
+              {/* User Button (Chuyển sang login) */}
+              <div className="action-btn" onClick={() => navigate('/login')}>
+                <FaUser color="#fff" size={18} />
+              </div>
             </div>
-            <div className="user">
-              <FaUser
-                className="icon"
-                onClick={handleUserClick}
-                style={{ cursor: 'pointer', opacity: isAuthenticated ? 1 : 0.5 }}
-                title={isAuthenticated ? 'Đăng xuất' : 'Đăng nhập'}
-              />
-            </div>
-          </div>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+    </>
   );
 };
 

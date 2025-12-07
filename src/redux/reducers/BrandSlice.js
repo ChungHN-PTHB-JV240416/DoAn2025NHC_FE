@@ -1,15 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { BASE_URL_ADMIN, getToken } from '../../api/index'; // Import BASE_URL_ADMIN và getToken
+import { BASE_URL, getToken } from '../../api/index'; // SỬA: Dùng BASE_URL thường
 
 // Async thunk to fetch all brands
 export const fetchBrands = createAsyncThunk('brands/fetchBrands', async (_, { rejectWithValue }) => {
   try {
-    const token = getToken(); // Lấy token từ cookies
-    const response = await BASE_URL_ADMIN.get('/brands', {
-      params: { page: 0, size: 1000 },
-      headers: {
-        Authorization: `Bearer ${token}`, // Thêm token vào header
-      },
+    // Gọi API public: /api/v1/brands
+    const response = await BASE_URL.get('/brands', {
+      params: { page: 0, size: 1000 }
     });
     return response.data.content || response.data;
   } catch (error) {
@@ -20,19 +17,14 @@ export const fetchBrands = createAsyncThunk('brands/fetchBrands', async (_, { re
 // Async thunk to fetch brand details by ID
 export const fetchBrandDetail = createAsyncThunk('brands/fetchBrandDetail', async (brandId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const response = await BASE_URL_ADMIN.get(`/brands/${brandId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await BASE_URL.get(`/brands/${brandId}`);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Không thể lấy chi tiết thương hiệu!');
   }
 });
 
-// Async thunk to add a new brand
+// Async thunk to add a new brand (CẦN TOKEN)
 export const addBrand = createAsyncThunk('brands/addBrand', async (brandData, { rejectWithValue }) => {
   try {
     const token = getToken();
@@ -44,7 +36,7 @@ export const addBrand = createAsyncThunk('brands/addBrand', async (brandData, { 
         formData.append(key, value);
       }
     });
-    const response = await BASE_URL_ADMIN.post('/brands', formData, {
+    const response = await BASE_URL.post('/brands', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
@@ -56,7 +48,7 @@ export const addBrand = createAsyncThunk('brands/addBrand', async (brandData, { 
   }
 });
 
-// Async thunk to update a brand
+// Async thunk to update a brand (CẦN TOKEN)
 export const updateBrand = createAsyncThunk('brands/updateBrand', async ({ brandId, brandData }, { rejectWithValue }) => {
   try {
     const token = getToken();
@@ -68,7 +60,7 @@ export const updateBrand = createAsyncThunk('brands/updateBrand', async ({ brand
         formData.append(key, value);
       }
     });
-    const response = await BASE_URL_ADMIN.put(`/brands/${brandId}`, formData, {
+    const response = await BASE_URL.put(`/brands/${brandId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
@@ -80,11 +72,11 @@ export const updateBrand = createAsyncThunk('brands/updateBrand', async ({ brand
   }
 });
 
-// Async thunk to delete a brand
+// Async thunk to delete a brand (CẦN TOKEN)
 export const deleteBrand = createAsyncThunk('brands/deleteBrand', async (brandId, { rejectWithValue }) => {
   try {
     const token = getToken();
-    await BASE_URL_ADMIN.delete(`/brands/${brandId}`, {
+    await BASE_URL.delete(`/brands/${brandId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

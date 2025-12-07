@@ -7,7 +7,7 @@ import { addToWishList, fetchWishList, removeFromWishList } from '../redux/reduc
 import { FaHeart } from 'react-icons/fa'; // Sử dụng biểu tượng trái tim từ react-icons
 import '../styles/CardProduct.scss';
 
-const CardProduct = ({ product, onViewDetail }) => {
+const CardProduct = ({ product, onViewDetail }) => {    
     const dispatch = useDispatch();
     const { wishList, loading } = useSelector((state) => state.wishList);
     const [isInWishList, setIsInWishList] = useState(false);
@@ -49,40 +49,51 @@ const CardProduct = ({ product, onViewDetail }) => {
     };
 
     return (
-        <Card className="mb-4 shadow-sm">
-            <Card.Img
-                variant="top"
-                src={product.image || 'https://picsum.photos/300?random=1'}
-                alt={product.productName}
-                onError={(e) => (e.target.src = 'https://picsum.photos/300?random=1')}
-            />
-            <Card.Body>
-                <Card.Title className="text-center">{product.productName || 'Không có tên'}</Card.Title>
-                <Card.Text className="text-center">
+        <Card className="mb-4 shadow-sm border-0 h-100 product-hover-effect">
+            <div style={{ padding: '15px', position: 'relative' }}>
+                <Card.Img
+                    variant="top"
+                    src={product.image || 'https://picsum.photos/300?random=1'}
+                    alt={product.productName}
+                    onError={(e) => (e.target.src = 'https://picsum.photos/300?random=1')}
+                    // FIX LỖI ẢNH: Đặt chiều cao cố định và dùng contain
+                    style={{ height: '200px', objectFit: 'contain', width: '100%' }} 
+                />
+                {product.isNew && (
+                    <span className="badge bg-danger position-absolute top-0 start-0 m-3">Mới</span>
+                )}
+            </div>
+            <Card.Body className="d-flex flex-column">
+                <Card.Title className="text-center fw-bold text-dark text-truncate" title={product.productName}>
+                    {product.productName || 'Không có tên'}
+                </Card.Title>
+                <Card.Text className="text-center text-muted small" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', height: '40px' }}>
                     {product.description || 'Không có mô tả'}
                 </Card.Text>
-                <Card.Text className="text-center text-danger">
+                <Card.Text className="text-center text-danger fw-bold fs-5 my-2">
                     {product.unitPrice != null ? product.unitPrice.toLocaleString('vi-VN') : 'Liên hệ'} VNĐ
                 </Card.Text>
-                <Button variant="primary" className="w-100 mb-2" onClick={() => onViewDetail(product.productId)}>
-                    Xem chi tiết
-                </Button>
-                {userId && (
-                    <Button
-                        variant={isInWishList ? 'danger' : 'outline-primary'}
-                        className="w-100 d-flex align-items-center justify-content-center"
-                        onClick={handleAddToWishList}
-                        disabled={loading}
-                    >
-                        <FaHeart
-                            style={{
-                                marginRight: isInWishList ? 0 : '5px', // Không cần margin nếu là "Xóa"
-                                color: isInWishList ? 'red' : 'inherit', // Trái tim đỏ khi đã thêm
-                            }}
-                        />
-                        {isInWishList ? '' : 'Thêm vào yêu thích'} {/* Chỉ hiển thị text khi chưa thêm */}
+                <div className="mt-auto">
+                    <Button variant="primary" className="w-100 mb-2 rounded-pill" onClick={() => onViewDetail(product.productId)}>
+                        Xem chi tiết
                     </Button>
-                )}
+                    {userId && (
+                        <Button
+                            variant={isInWishList ? 'outline-danger' : 'outline-secondary'}
+                            className="w-100 d-flex align-items-center justify-content-center rounded-pill"
+                            onClick={handleAddToWishList}
+                            disabled={loading}
+                        >
+                            <FaHeart
+                                style={{
+                                    marginRight: isInWishList ? 0 : '5px', // Không cần margin nếu là "Xóa"
+                                    color: isInWishList ? 'red' : 'inherit', // Trái tim đỏ khi đã thêm
+                                }}
+                            />
+                            {isInWishList ? ' Đã yêu thích' : ' Yêu thích'} 
+                        </Button>
+                    )}
+                </div>
             </Card.Body>
         </Card>
     );

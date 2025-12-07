@@ -1,95 +1,32 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
-import { useSelector } from 'react-redux'; // Thêm useSelector
-import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
-import { toast } from 'react-toastify'; // Thêm toast
-import '../../styles/Footer.scss';
+import { FaFacebook, FaInstagram, FaYoutube, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 
 const FooterUser = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state) => state.auth); // Lấy trạng thái đăng nhập từ Redux
-
-  const handleLinkClick = (e, path) => {
-    if (!isAuthenticated) {
-      e.preventDefault(); // Ngăn hành động mặc định của liên kết
-      toast.warning('Vui lòng đăng nhập để truy cập!', { position: 'top-right', autoClose: 3000 });
-      navigate('/login');
-    }
-    console.log(path);
-    // Nếu đã đăng nhập, cho phép nhấp vào liên kết bình thường
-  };
-
   return (
-    <footer className="footer">
+    <footer style={{ backgroundColor: '#1a1a1a', color: '#fff', padding: '50px 0 20px', marginTop: 'auto' }}>
       <Container>
         <Row>
-          <Col md={4}>
-            <h5>Thông tin liên hệ</h5>
-            <p>Địa chỉ: Đường Yên,Xuân Nộn,Đông Anh,Hà Nội</p>
-            <p>Hotline: 0965804364</p>
-            <p>Email: nguyenhuuchung274@gmail.com</p>
+          <Col md={4} className="mb-4">
+            <h5 className="text-uppercase fw-bold text-warning mb-3">APHONE</h5>
+            <p>Hệ thống bán lẻ điện thoại chính hãng uy tín.</p>
           </Col>
-          <Col md={4}>
-            <h5>Chính sách</h5>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Chính sách bảo hành
-              </a>
-            </p>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Chính sách đổi trả
-              </a>
-            </p>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Chính sách giao hàng
-              </a>
-            </p>
+          <Col md={4} className="mb-4">
+            <h5 className="text-uppercase fw-bold text-warning mb-3">Liên hệ</h5>
+            <p><FaMapMarkerAlt className="me-2" /> Hà Nội, Việt Nam</p>
+            <p><FaPhoneAlt className="me-2" /> 0965.804.364</p>
+            <p><FaEnvelope className="me-2" /> support@aphone.vn</p>
           </Col>
-          <Col md={4}>
-            <h5>Liên kết nhanh</h5>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Giới thiệu
-              </a>
-            </p>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Tin tức
-              </a>
-            </p>
-            <p>
-              <a
-                href="#"
-                onClick={(e) => handleLinkClick(e, '#')}
-                style={{ color: isAuthenticated ? '#007bff' : '#6c757d', pointerEvents: isAuthenticated ? 'auto' : 'none' }}
-              >
-                Liên hệ
-              </a>
-            </p>
+          <Col md={4} className="mb-4">
+            <h5 className="text-uppercase fw-bold text-warning mb-3">Mạng xã hội</h5>
+            <div className="d-flex gap-3 fs-4">
+                <FaFacebook /> <FaInstagram /> <FaYoutube />
+            </div>
           </Col>
         </Row>
+        <div className="text-center small text-secondary mt-4 border-top pt-3 border-secondary">
+          &copy; 2025 APHONE. All rights reserved.
+        </div>
       </Container>
     </footer>
   );

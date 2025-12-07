@@ -5,12 +5,30 @@ import { store } from './redux/store/index.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+
+// Layouts
 import DefaultLayout from './layouts/DefaultLayout.jsx';
 import AdminLayout from './layouts/AdminLayout.jsx';
+import UserLayout from './layouts/UserLayout.jsx'; // <--- LAYOUT MỚI
+
+// Pages
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import CategoryProductsPage from './components/CategoryProductsPage.jsx';
+
+// Pages User
 import HomeUser from './pages/users/HomeUser.jsx';
+import BrandsPage from './components/BrandsPage.jsx';
+import BrandProductsPage from './components/BrandProductsPage.jsx';
+import CategoryProductsPageUser from './components/CategoryProductsPageUser.jsx';
+import CartPage from './pages/users/CartPage.jsx';
+import OrderHistoryPage from './pages/users/OrderHistoryPage.jsx';
+
+// Pages Admin
 import Category from './pages/admin/category/Category.jsx';
 import Product from './pages/admin/product/Product.jsx';
 import Oders from './pages/admin/oders/Oders.jsx';
@@ -18,19 +36,11 @@ import User from './pages/admin/manageruser/User.jsx';
 import Dashboard from './pages/admin/dashboard/Dashboard.jsx';
 import AdminComments from './pages/admin/product/AdminComments.jsx';
 import Brand from './pages/admin/brand/Brand.jsx';
+
+// Components
 import PrivateRoute from './components/PrivateRoute.jsx';
-import CategoryProductsPage from './components/CategoryProductsPage.jsx';
-import BrandsPage from './components/BrandsPage.jsx';
-import BrandProductsPage from './components/BrandProductsPage.jsx';
-import CategoryProductsPageUser from './components/CategoryProductsPageUser.jsx';
-import CartPage from './pages/users/CartPage.jsx';
-import axios from 'axios'; // Thêm axios để gọi API
-import OrderHistoryPage from './pages/users/OrderHistoryPage.jsx';
-import ForgotPassword from './pages/ForgotPassword.jsx';
-import ResetPassword from './pages/ResetPassword.jsx';
 
-
-// Component CheckoutSuccess
+// --- Component CheckoutSuccess ---
 const CheckoutSuccess = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -80,7 +90,7 @@ const CheckoutSuccess = () => {
                 console.error('Lỗi khi xác nhận thanh toán:', error);
                 navigate('/user/cart');
             });
-    }, [navigate, dispatch]);
+    }, [navigate, dispatch, location.search]);
 
     const handleReturnToHome = (e) => {
         e.preventDefault();
@@ -122,115 +132,38 @@ function App() {
     return (
         <Provider store={store}>
             <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<DefaultLayout />}>
                     <Route index element={<Home />} />
                     <Route path="categories/:categoryId" element={<CategoryProductsPage />} />
+                    <Route path="brands" element={<BrandsPage />} />
+                    <Route path="brands/:brandId" element={<BrandProductsPage />} />
+                    <Route path="categories/:categoryId" element={<CategoryProductsPageUser />} />
                 </Route>
 
+                {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} /> 
                 <Route path="/reset-password" element={<ResetPassword />} /> 
 
-                <Route path="/user">
-                    <Route
-                        index
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <HomeUser />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="brands"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <BrandsPage />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="brands/:brandId"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <BrandProductsPage />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="categories/:categoryId"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <CategoryProductsPageUser />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="cart"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <CartPage />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="cart/checkout/success"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <CheckoutSuccess />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="cart/checkout/cancel"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <CheckoutCancel />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="history"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <OrderHistoryPage />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="repair"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <div>Repair Page (Placeholder)</div>
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="knowledge"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <div>Knowledge Page (Placeholder)</div>
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="accessories"
-                        element={
-                            <PrivateRoute requiredRole="USER">
-                                <div>Accessories Page (Placeholder)</div>
-                            </PrivateRoute>
-                        }
-                    />
+                {/* USER ROUTES: ÁP DỤNG LAYOUT USER TẠI ĐÂY */}
+                <Route path="/user" element={<PrivateRoute requiredRole="USER"><UserLayout /></PrivateRoute>}>
+                    <Route index element={<HomeUser />} />
+                    <Route path="brands" element={<BrandsPage />} />
+                    <Route path="brands/:brandId" element={<BrandProductsPage />} />
+                    <Route path="categories/:categoryId" element={<CategoryProductsPageUser />} />
+                    <Route path="cart" element={<CartPage />} />
+                    <Route path="cart/checkout/success" element={<CheckoutSuccess />} />
+                    <Route path="cart/checkout/cancel" element={<CheckoutCancel />} />
+                    <Route path="history" element={<OrderHistoryPage />} />
+                    <Route path="repair" element={<div>Repair Page (Placeholder)</div>} />
+                    <Route path="knowledge" element={<div>Knowledge Page (Placeholder)</div>} />
+                    <Route path="accessories" element={<div>Accessories Page (Placeholder)</div>} />
                 </Route>
 
-                <Route
-                    path="/admin"
-                    element={
-                        <PrivateRoute requiredRole="ADMIN">
-                            <AdminLayout />
-                        </PrivateRoute>
-                    }
-                >
+                {/* Admin Routes */}
+                <Route path="/admin" element={<PrivateRoute requiredRole="ADMIN"><AdminLayout /></PrivateRoute>}>
                     <Route index element={<Dashboard />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="category" element={<Category />} />
@@ -243,6 +176,7 @@ function App() {
 
                 <Route path="*" element={<div>404 - Page Not Found</div>} />
             </Routes>
+            
             <ToastContainer
                 position="top-right"
                 autoClose={3000}

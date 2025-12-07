@@ -58,26 +58,35 @@ const CategoryProductsPage = () => {
     fetchProducts();
   }, [categoryId]);
 
-  if (loading) return <div>Đang tải...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div className="text-center py-5">Đang tải...</div>;
+  if (error) return <div className="text-center text-danger py-5">{error}</div>;
 
   return (
-    <Container className="category-products-page">
+    <Container className="category-products-page py-4">
       {/* Banner quảng cáo */}
       <Banner />
 
-      <h1>
+      <h1 className="text-center my-5 text-uppercase fw-bold text-primary">
         {categoryId === '1' ? 'MAN PHONE' : categoryId === '2' ? 'GIRL PHONE' : 'COUPLE'}
       </h1>
       <Row>
         {products.map((product) => (
-          <Col md={4} key={product.productId} className="mb-4">
-            <Card className="product-card">
-              <Card.Img variant="top" src={product.image} alt={product.productName} />
-              <Card.Body>
-                <Card.Title>{product.productName}</Card.Title>
-                <Card.Text>{product.description}</Card.Text>
-                <Card.Text>Giá: {product.unitPrice.toLocaleString('vi-VN')} VNĐ</Card.Text>
+          <Col md={4} sm={6} key={product.productId} className="mb-4">
+            <Card className="product-card h-100 shadow-sm border-0">
+              <div style={{ padding: '20px' }}>
+                  <Card.Img 
+                    variant="top" 
+                    src={product.image} 
+                    alt={product.productName} 
+                    style={{ height: '250px', objectFit: 'contain' }} // Fix ảnh sản phẩm
+                  />
+              </div>
+              <Card.Body className="d-flex flex-column bg-white">
+                <Card.Title className="text-center fw-bold">{product.productName}</Card.Title>
+                <Card.Text className="text-muted small text-center" style={{ minHeight: '40px' }}>{product.description}</Card.Text>
+                <Card.Text className="text-danger fw-bold fs-5 text-center mt-auto">
+                    Giá: {product.unitPrice.toLocaleString('vi-VN')} VNĐ
+                </Card.Text>
               </Card.Body>
             </Card>
           </Col>
@@ -85,17 +94,22 @@ const CategoryProductsPage = () => {
       </Row>
 
       {/* Phần bài viết (blog posts) */}
-      <div className="blog-section mt-5">
-        <h2>Kiến thức điện thoại</h2>
+      <div className="blog-section mt-5 pt-5 border-top">
+        <h2 className="text-center mb-4">Kiến thức điện thoại</h2>
         <Row>
           {blogPosts.map((post) => (
-            <Col md={3} key={post.id} className="mb-4">
-              <Card className="blog-card">
-                <Card.Img variant="top" src={post.image} alt={post.title} />
+            <Col md={3} sm={6} key={post.id} className="mb-4">
+              <Card className="blog-card h-100 shadow-sm border-0">
+                <Card.Img 
+                    variant="top" 
+                    src={post.image} 
+                    alt={post.title} 
+                    style={{ height: '180px', objectFit: 'cover' }} // Blog dùng cover
+                />
                 <Card.Body>
-                  <Card.Title>{post.title}</Card.Title>
-                  <Card.Subtitle className="mb-2 text-muted">{post.date}</Card.Subtitle>
-                  <Card.Text>{post.description}</Card.Text>
+                  <Card.Title className="fs-6 fw-bold">{post.title}</Card.Title>
+                  <Card.Subtitle className="mb-2 text-muted small">{post.date}</Card.Subtitle>
+                  <Card.Text className="small">{post.description}</Card.Text>
                 </Card.Body>
               </Card>
             </Col>

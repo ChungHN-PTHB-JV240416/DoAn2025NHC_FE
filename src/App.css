@@ -1,21 +1,54 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  /* Thêm biến màu để dễ quản lý */
+  --primary-color: #646cff;
+  --secondary-color: #535bf2;
+  --bg-color: #242424;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --text-color: rgba(255, 255, 255, 0.87);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  /* Thêm căn giữa theo chiều dọc */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo {
-  height: 6em;
+  height: 8em; /* Tăng kích thước logo lên một chút */
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Hiệu ứng nảy nhẹ */
+  filter: grayscale(100%) opacity(0.7); /* Mặc định để logo đen trắng mờ */
 }
+
+/* Hiệu ứng hover mới: Logo hiện màu, to lên và sáng rực */
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: grayscale(0%) opacity(1) drop-shadow(0 0 2em #646cffaa);
+  transform: scale(1.1) translateY(-10px);
 }
+
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: grayscale(0%) opacity(1) drop-shadow(0 0 2em #61dafbaa);
 }
 
 @keyframes logo-spin {
@@ -29,14 +62,56 @@
 
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+    /* Chỉnh lại tốc độ xoay chậm hơn cho mượt */
+    animation: logo-spin infinite 30s linear;
   }
 }
 
 .card {
-  padding: 2em;
+  padding: 3em; /* Tăng padding */
+  margin-top: 2em;
+  
+  /* Thay đổi giao diện thẻ Card thành dạng kính mờ */
+  background: var(--card-bg);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px); /* Card nổi lên khi di chuột vào */
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card button {
+  /* Style lại nút bấm nếu có trong card */
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+.card button:hover {
+  border-color: var(--primary-color);
 }
 
 .read-the-docs {
-  color: #888;
+  margin-top: 2rem;
+  color: #ccc;
+  font-size: 0.9em;
+  letter-spacing: 1px;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.read-the-docs:hover {
+  opacity: 1;
+  color: var(--primary-color);
 }
