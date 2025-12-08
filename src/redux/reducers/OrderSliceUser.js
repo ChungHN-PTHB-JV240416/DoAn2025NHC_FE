@@ -8,13 +8,13 @@ export const fetchUserOrderHistory = createAsyncThunk(
         const { auth } = getState();
         const token = auth.token;
         try {
-            console.log('Sending request to /history/getAll with userId:', userId);
+            // console.log('Sending request to /history/getAll with userId:', userId);
             const response = await BASE_URL_USER.get(`/history/getAll?userId=${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            console.log('Response from /history/getAll:', response.data);
+            // console.log('Response from /history/getAll:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching user order history:', error.response?.data || error.message);

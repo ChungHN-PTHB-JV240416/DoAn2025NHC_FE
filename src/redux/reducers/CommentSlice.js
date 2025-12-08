@@ -1,56 +1,87 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { BASE_URL_ADMIN } from '../../api/index'; // Sử dụng BASE_URL_ADMIN đã cấu hình interceptor
+// Import BASE_URL_ADMIN và getToken từ api
+import { BASE_URL_ADMIN, getToken } from '../../api/index'; 
 
-// Action bất đồng bộ để lấy tất cả bình luận
-export const fetchComments = createAsyncThunk(
-  'comments/fetchComments',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await BASE_URL_ADMIN.get('/comments');
-      return response.data || [];
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Không thể tải bình luận!');
+// Hàm helper để tạo header và LOG TOKEN ra kiểm tra
+const getAuthHeader = () => {
+  const token = getToken();
+  
+  // [DEBUG]: Bật F12 xem dòng này có in ra chuỗi Token dài ngoằng không?
+  // Nếu in ra "Token used: null" hoặc "undefined" nghĩa là bạn chưa lưu token đúng chỗ.
+  // console.log("🔑 Token used for Admin API:", token);
+
+  if (!token) return {}; // Trả về rỗng nếu không có token
+
+  return { 
+    headers: { Authorization: `Bearer ${token}` } 
+  };
+};
+
+// 1. ADMIN: Lấy tất cả bình luận
+export const fetchComments = createAsyncThunk('comments/fetchComments', async (_, { rejectWithValue }) => {
+  try {
+    const config = getAuthHeader();
+    if (!config.headers) {
+        return rejectWithValue("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn!");
     }
-  }
-);
 
-// Action bất đồng bộ để thêm phản hồi cho bình luận
-export const addReply = createAsyncThunk(
-  'comments/addReply',
-  async ({ commentId, content }, { rejectWithValue }) => {
-    try {
-      const response = await BASE_URL_ADMIN.post(`/comments/${commentId}/reply`, { content });
-      return { commentId, reply: response.data };
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Không thể thêm phản hồi!');
+    const response = await BASE_URL_ADMIN.get('/comments', config);
+    return response.data || [];
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Không thể tải bình luận!');
+  }
+});
+
+// 2. ADMIN: Trả lời bình luận
+export const addReply = createAsyncThunk('comments/addReply', async ({ commentId, content }, { rejectWithValue }) => {
+  try {
+    const config = getAuthHeader();
+    
+    // Kiểm tra chặn ngay nếu không có token để tránh gọi API bị 401
+    if (!config.headers) {
+        console.error("❌ Missing Token!");
+        return rejectWithValue("Vui lòng đăng nhập lại (Thiếu Token)!");
     }
-  }
-);
 
-const commentSlice = createSlice({
+    const response = await BASE_URL_ADMIN.post(
+        `/comments/${commentId}/reply`, 
+        { content }, 
+        config // Truyền header vào đây
+    );
+    return { commentId, reply: response.data };
+  } catch (error) {
+    // console.error("❌ Lỗi API Reply:", error);
+    if (error.response && error.response.status === 401) {
+        return rejectWithValue("Phiên đăng nhập hết hạn hoặc bạn không có quyền Admin!");
+    }
+    return rejectWithValue(error.response?.data?.message || 'Lỗi gửi phản hồi!');
+  }
+});
+
+// 3. ADMIN: Xóa bình luận
+export const deleteComment = createAsyncThunk('comments/deleteComment', async (commentId, { rejectWithValue }) => {
+    try {
+        const config = getAuthHeader();
+        if (!config.headers) return rejectWithValue("Thiếu Token!");
+
+        await BASE_URL_ADMIN.delete(`/comments/${commentId}`, config);
+        return commentId;
+    } catch (error) {
+        return rejectWithValue(error.response?.data?.message || 'Lỗi xóa bình luận');
+    }
+});
+
+const CommentSlice = createSlice({
   name: 'comments',
   initialState: {
     comments: [],
     loading: false,
     error: null,
-    replyInputs: {}, // Lưu nội dung phản hồi tạm thời cho từng comment
   },
-  reducers: {
-    setReplyInput: (state, action) => {
-      const { commentId, value } = action.payload;
-      state.replyInputs[commentId] = value;
-    },
-    clearReplyInput: (state, action) => {
-      const { commentId } = action.payload;
-      state.replyInputs[commentId] = '';
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchComments.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchComments.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchComments.fulfilled, (state, action) => {
         state.loading = false;
         state.comments = action.payload;
@@ -59,23 +90,21 @@ const commentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(addReply.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(addReply.fulfilled, (state, action) => {
-        state.loading = false;
         const { commentId, reply } = action.payload;
-        state.comments = state.comments.map((comment) =>
-          comment.id === commentId ? { ...comment, reply } : comment
-        );
+        state.comments = state.comments.map((comment) => {
+            // Mapping linh hoạt cả id lẫn commentId
+            const currentId = comment.commentId || comment.id;
+            if (currentId === commentId) {
+                return { ...comment, reply };
+            }
+            return comment;
+        });
       })
-      .addCase(addReply.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(deleteComment.fulfilled, (state, action) => {
+          state.comments = state.comments.filter(c => (c.commentId || c.id) !== action.payload);
       });
   },
 });
 
-export const { setReplyInput, clearReplyInput } = commentSlice.actions;
-export default commentSlice.reducer;
+export default CommentSlice.reducer;

@@ -65,7 +65,7 @@ const authSlice = createSlice({
         state.user = { userId: action.payload.userId, username: action.payload.username }; // Lưu userId và username
         state.roles = action.payload.roles.map((role) => role.roleName || role);
         setRoles(state.roles);
-        console.log('State sau khi đăng nhập:', state); // Debug state
+        // console.log('State sau khi đăng nhập:', state); // Debug state
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -76,7 +76,7 @@ const authSlice = createSlice({
           state.error = action.payload.message || 'Đăng nhập thất bại';
           state.validationErrors = {};
         }
-        console.error('Lỗi đăng nhập trong Redux:', action.payload); // Debug lỗi
+        // console.error('Lỗi đăng nhập trong Redux:', action.payload); // Debug lỗi
       })
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
@@ -90,7 +90,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload.message || 'Đăng ký thất bại';
         state.validationErrors = action.payload.errors || {};
-        console.error('Lỗi đăng ký trong Redux:', action.payload); // Debug lỗi
+        // console.error('Lỗi đăng ký trong Redux:', action.payload); // Debug lỗi
       })
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
@@ -104,13 +104,13 @@ const authSlice = createSlice({
         state.error = null;
         state.validationErrors = {};
         removeRoles();
-        console.log('State sau khi đăng xuất:', state); // Debug state
+        // console.log('State sau khi đăng xuất:', state); // Debug state
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload.message || 'Đăng xuất thất bại';
         state.validationErrors = {};
-        console.error('Lỗi đăng xuất trong Redux:', action.payload); // Debug lỗi
+        // console.error('Lỗi đăng xuất trong Redux:', action.payload); // Debug lỗi
       });
   },
 });

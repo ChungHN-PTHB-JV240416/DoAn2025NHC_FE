@@ -11,11 +11,11 @@ export const fetchCartItems = createAsyncThunk(
             return rejectWithValue('Không có token, có thể người dùng đã đăng xuất');
         }
         try {
-            console.log('Sending request to /cart/list with userId:', userId);
+            // console.log('Sending request to /cart/list with userId:', userId);
             const response = await BASE_URL_USER.get(`/cart/list?userId=${userId}`, {
                 headers: { Authorization: `Bearer ${token}` }, // Thêm token vào header
             });
-            console.log('Response from /cart/list:', response.data);
+            // console.log('Response from /cart/list:', response.data);
             const mappedItems = response.data.map(item => ({
                 cartItemId: item.shoppingCartId,
                 productId: item.productId,

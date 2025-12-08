@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Layout, Menu, theme, Button, ConfigProvider, Avatar, Dropdown, Space, Typography, Tooltip } from 'antd';
+import { Layout, Menu, theme, Button, ConfigProvider, Avatar, Dropdown, Typography, Tooltip } from 'antd';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import {
   ClockCircleOutlined,
   UserOutlined,
-  ShoppingCartOutlined,
+  ShoppingOutlined,
   AppstoreOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -15,64 +15,79 @@ import {
   LogoutOutlined,
   BellOutlined,
   SettingOutlined,
-  HomeOutlined
+  MessageOutlined // <--- Import icon tin nhắn
 } from '@ant-design/icons';
 import { toggleCollapsed, toggleDarkMode } from '../redux/reducers/LayoutSlice';
-import { clearCurrentUser } from '../redux/reducers/UserSlice';
-import Cookies from 'js-cookie';
+import { logoutUser } from '../redux/reducers/AuthSlice';
 import { toast } from 'react-toastify';
-import { logout } from '../services/authService';
+import UserAccountModal from '../pages/users/UserAccountModal';
 
 const { Header, Content, Footer, Sider } = Layout;
-const { Text } = Typography;
 
+// --- CẤU HÌNH MENU ---
 const items = [
   { key: 'dashboard', icon: <ClockCircleOutlined />, label: 'Thống kê tổng quan' },
   { key: 'user', icon: <UserOutlined />, label: 'Quản lý người dùng' },
-  { key: 'order', icon: <ShoppingCartOutlined />, label: 'Quản lý đơn hàng' },
+  { key: 'order', icon: <ShoppingOutlined />, label: 'Quản lý đơn hàng' },
   { type: 'divider' },
   { key: 'product', icon: <AppstoreOutlined />, label: 'Quản lý sản phẩm' },
   { key: 'category', icon: <AppstoreOutlined />, label: 'Quản lý danh mục' },
   { key: 'brand', icon: <TagOutlined />, label: 'Quản lý thương hiệu' },
+  // --- MỤC QUẢN LÝ BÌNH LUẬN ---
+  { key: 'comment/admin', icon: <MessageOutlined />, label: 'Quản lý bình luận' },
 ];
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  
   const { collapsed, isDarkMode } = useSelector((state) => state.layout);
-  const { currentUser } = useSelector((state) => state.users);
+  const { user } = useSelector((state) => state.auth); 
+  const { userAccount } = useSelector((state) => state.accountUser);
 
-  // Ant Design Token
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
   const {
-    token: { colorBgContainer, borderRadiusLG, colorBgLayout },
+    token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
   const handleMenuClick = (e) => {
+    // Navigate đến /admin/ + key (VD: /admin/comment/admin)
     navigate(`/admin/${e.key}`);
   };
 
   const handleLogout = async () => {
     try {
-      await logout();
-      dispatch(clearCurrentUser());
+      await dispatch(logoutUser()).unwrap();
       navigate('/login');
-      toast.success('Đăng xuất thành công!', { position: 'top-right', autoClose: 3000 });
+      toast.success('Đăng xuất thành công!');
     } catch (error) {
-      console.error('Lỗi trong quá trình đăng xuất:', error);
-      Cookies.remove('token');
-      dispatch(clearCurrentUser());
-      navigate('/login');
-      toast.error('Đã xảy ra lỗi khi đăng xuất!', { position: 'top-right', autoClose: 3000 });
+      toast.error('Đăng xuất thất bại!');
     }
   };
 
-  const selectedKey = location.pathname.split('/admin/')[1] || 'dashboard';
+  // Logic active menu
+  // Nếu path là /admin/comment/admin -> key là 'comment/admin'
+  const selectedKey = location.pathname.replace('/admin/', '') || 'dashboard';
+  
+  const displayAvatar = userAccount?.avatar || user?.avatar;
+  const displayName = userAccount?.fullname || user?.username || 'Admin';
 
-  // Menu dropdown cho User
   const userMenuProps = {
     items: [
-     
+      { 
+        key: 'profile', 
+        label: 'Hồ sơ cá nhân', 
+        icon: <UserOutlined />,
+        onClick: () => toast.info('Tính năng đang phát triển') 
+      },
+      { 
+        key: 'settings', 
+        label: 'Cài đặt hệ thống', 
+        icon: <SettingOutlined />,
+        onClick: () => toast.info('Tính năng đang phát triển') 
+      },
       { type: 'divider' },
       { 
         key: 'logout', 
@@ -89,32 +104,22 @@ const AdminLayout = () => {
       theme={{
         algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#722ed1', // Đổi sang màu Tím (Purple) hiện đại
-          borderRadius: 12, // Bo góc lớn hơn
+          colorPrimary: '#722ed1',
+          borderRadius: 8,
           fontFamily: "'Inter', sans-serif",
         },
         components: {
-          Layout: {
-            siderBg: '#111827', // Sidebar màu tối đậm (Dark slate)
-            triggerBg: '#1f2937',
-          },
-          Menu: {
-            darkItemBg: '#111827',
-            darkItemSelectedBg: '#722ed1', // Màu tím khi active
-            itemHeight: 45,
-            itemMarginInline: 10, // Thụt lề menu item
-            itemBorderRadius: 8,
-          }
+          Layout: { siderBg: '#001529' },
+          Menu: { darkItemBg: '#001529' }
         },
       }}
     >
       <Layout style={{ minHeight: '100vh' }}>
-        {/* SIDEBAR */}
         <Sider
           trigger={null}
           collapsible
           collapsed={collapsed}
-          width={260}
+          width={250}
           style={{
             overflow: 'auto',
             height: '100vh',
@@ -126,149 +131,122 @@ const AdminLayout = () => {
             boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)',
           }}
         >
-          {/* LOGO AREA */}
           <div style={{ 
-            height: 70, 
+            height: 64, 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            background: 'rgba(255,255,255,0.05)',
-            margin: '0 10px 10px 10px',
-            borderRadius: '0 0 12px 12px'
+            background: 'rgba(255,255,255,0.1)',
+            margin: 16,
+            borderRadius: 6
           }}>
-            <div style={{ 
-              color: '#fff', 
-              fontSize: collapsed ? 20 : 22, 
-              fontWeight: 'bold', 
-              letterSpacing: 1,
-              background: 'linear-gradient(45deg, #722ed1, #eb2f96)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              {collapsed ? 'PS' : 'PHONE STORE'}
-            </div>
+             <img src="/image/anhthuonghieuA.jpg" alt="Logo" style={{ height: 32, borderRadius: 4, marginRight: collapsed ? 0 : 10 }} />
+             {!collapsed && (
+                <span style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    ADMIN PANEL
+                </span>
+             )}
           </div>
 
           <Menu
             theme="dark"
             mode="inline"
-            selectedKeys={[selectedKey]}
+            selectedKeys={[selectedKey]} 
             items={items}
             onClick={handleMenuClick}
-            style={{ borderRight: 0 }}
           />
         </Sider>
 
-        {/* MAIN LAYOUT */}
-        <Layout style={{ marginLeft: collapsed ? 80 : 260, transition: 'margin-left 0.2s ease' }}>
-          
-          {/* HEADER */}
+        <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s ease' }}>
           <Header
             style={{
               padding: '0 24px',
-              background: isDarkMode ? '#141414' : 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)', // Hiệu ứng kính mờ
+              background: colorBgContainer,
               position: 'sticky',
               top: 0,
               zIndex: 99,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-              height: 70,
+              boxShadow: '0 1px 4px rgba(0,21,41,0.08)',
+              height: 64,
             }}
           >
-            {/* Left: Toggle Button & Title */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <Button
                 type="text"
                 icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                 onClick={() => dispatch(toggleCollapsed())}
-                style={{ fontSize: '16px', width: 40, height: 40 }}
+                style={{ fontSize: '16px', width: 64, height: 64 }}
               />
-              <Text strong style={{ fontSize: 18, color: isDarkMode ? '#fff' : '#1f2937' }}>
-                Dashboard Quản Trị
-              </Text>
             </div>
 
-            {/* Right: Actions & User Profile */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              
-              {/* Theme Toggle */}
               <Tooltip title={isDarkMode ? 'Chế độ sáng' : 'Chế độ tối'}>
                 <Button
                   shape="circle"
                   icon={isDarkMode ? <BulbFilled /> : <BulbOutlined />}
                   onClick={() => dispatch(toggleDarkMode())}
-                  style={{ border: 'none', background: 'transparent' }}
+                  style={{ border: 'none' }}
                 />
               </Tooltip>
 
-              {/* Notification */}
               <Tooltip title="Thông báo">
-                <Button 
-                  shape="circle" 
-                  icon={<BellOutlined />} 
-                  style={{ border: 'none', background: 'transparent' }} 
-                />
+                <Button shape="circle" icon={<BellOutlined />} style={{ border: 'none' }} />
               </Tooltip>
 
-              {/* User Dropdown */}
               <Dropdown menu={userMenuProps} placement="bottomRight" arrow>
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: 10, 
                   cursor: 'pointer',
-                  padding: '6px 12px',
-                  borderRadius: 30,
-                  background: isDarkMode ? 'rgba(255,255,255,0.1)' : '#f3f4f6',
-                  transition: 'all 0.3s'
-                }}>
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  transition: 'background 0.3s',
+                }}
+                className="hover:bg-gray-100"
+                >
                   <Avatar 
-                    style={{ backgroundColor: '#722ed1', verticalAlign: 'middle' }} 
-                    size="small"
+                    src={displayAvatar} 
+                    style={{ backgroundColor: '#722ed1' }} 
+                    icon={<UserOutlined />}
                   >
-                    {currentUser?.username ? currentUser.username.charAt(0).toUpperCase() : 'A'}
+                    {displayName.charAt(0).toUpperCase()}
                   </Avatar>
-                  {!isDarkMode && (
-                    <span style={{ fontWeight: 500, fontSize: 14, color: '#374151' }}>
-                      {currentUser?.username || 'Admin'}
-                    </span>
-                  )}
+                  <span style={{ fontWeight: 500, fontSize: 14 }}>
+                    {displayName}
+                  </span>
                 </div>
               </Dropdown>
             </div>
           </Header>
 
-          {/* CONTENT */}
-          <Content
-            style={{
-              margin: '24px 24px 0',
-              overflow: 'initial',
-              minHeight: 280,
-            }}
-          >
+          <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
             <div
               style={{
-                padding: 32,
+                padding: 24,
                 background: colorBgContainer,
                 borderRadius: borderRadiusLG,
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)', // Đổ bóng mềm cho nội dung
                 minHeight: '80vh',
-                position: 'relative'
               }}
             >
-              <Outlet context={{ isDarkMode, toggleTheme: () => dispatch(toggleDarkMode()) }} />
+              <Outlet context={{ isDarkMode }} />
             </div>
           </Content>
 
-          {/* FOOTER */}
-          <Footer style={{ textAlign: 'center', color: '#9ca3af', padding: '24px' }}>
-            Phone Store System ©{new Date().getFullYear()} Created with ❤️ by Nguyen Huu Chung
+          <Footer style={{ textAlign: 'center', padding: '20px' }}>
+            APHONE Admin System ©{new Date().getFullYear()} Created by You
           </Footer>
         </Layout>
       </Layout>
+
+      <UserAccountModal 
+        visible={isModalVisible} 
+        onClose={() => setIsModalVisible(false)} 
+        userId={user?.userId} 
+        onLogout={handleLogout}
+      />
     </ConfigProvider>
   );
 };

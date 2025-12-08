@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { fetchCartItems, updateCartItem, removeCartItem, clearCart, checkoutCart, checkoutCOD, checkoutSuccess, clearCheckoutRedirect } from '../../redux/reducers/CartSlice';
+import { 
+    fetchCartItems, 
+    updateCartItem, 
+    removeCartItem, 
+    clearCart, 
+    checkoutCart, 
+    checkoutCOD, 
+    checkoutSuccess, 
+    clearCheckoutRedirect 
+} from '../../redux/reducers/CartSlice';
 import { Card, Button, Form, Input, Row, Col, Typography, Space, Divider, Spin, Modal, Radio, Image } from 'antd';
 import { DeleteOutlined, ShoppingCartOutlined, CreditCardOutlined } from '@ant-design/icons';
 
@@ -15,7 +24,7 @@ const CartPage = () => {
     
     // Lấy dữ liệu từ Redux
     const { isAuthenticated, user, token } = useSelector((state) => state.auth);
-    const { items, loading, error, totalItems, checkoutRedirectUrl, orderId, hasFetchedCart } = useSelector((state) => state.cart);
+    const { items, loading, error, totalItems, checkoutRedirectUrl, orderId } = useSelector((state) => state.cart);
     
     const [form] = Form.useForm();
     const [paymentLoading, setPaymentLoading] = useState(false);
@@ -25,13 +34,23 @@ const CartPage = () => {
     // 1. Kiểm tra đăng nhập và lấy giỏ hàng
     useEffect(() => {
         if (isAuthenticated && user?.userId) {
-            // Luôn gọi lấy giỏ hàng mới nhất khi vào trang
             dispatch(fetchCartItems(user.userId));
         } else if (!isAuthenticated) {
             toast.warning('Vui lòng đăng nhập để xem giỏ hàng!', { position: 'top-right', autoClose: 3000 });
             navigate('/login');
         }
-    }, [isAuthenticated, user?.userId, dispatch, navigate]);
+    }, [isAuthenticated, user, dispatch, navigate]);
+
+    // [FIX LỖI WARNING]: Tách logic điền form ra riêng, chỉ chạy khi items > 0 (Form đã render)
+    useEffect(() => {
+        if (isAuthenticated && user && items.length > 0) {
+            form.setFieldsValue({
+                receiveName: user.fullName || user.username || '',
+                receivePhone: user.phone || user.phoneNumber || '',
+                receiveAddress: user.address || ''
+            });
+        }
+    }, [isAuthenticated, user, items.length, form]);
 
     // 2. Xử lý Redirect từ PayPal (nếu có)
     useEffect(() => {
@@ -48,7 +67,7 @@ const CartPage = () => {
             setOrderInfo({ orderId, totalPrice });
             toast.success('Đặt hàng COD thành công!', { position: 'top-right', autoClose: 3000 });
             dispatch(clearCheckoutRedirect());
-            dispatch(fetchCartItems(user.userId));
+            dispatch(fetchCartItems(user.userId)); // Refresh lại giỏ hàng (lúc này sẽ rỗng)
         }
     }, [orderId, dispatch, user?.userId]);
 
@@ -58,6 +77,8 @@ const CartPage = () => {
         const paymentId = searchParams.get('paymentId');
         const payerId = searchParams.get('PayerID');
         const userIdParam = searchParams.get('userId');
+        
+        // Lấy lại thông tin giao hàng từ URL (Do Paypal redirect làm mất state React)
         const receiveAddress = searchParams.get('receiveAddress');
         const receiveName = searchParams.get('receiveName');
         const receivePhone = searchParams.get('receivePhone');
@@ -67,23 +88,21 @@ const CartPage = () => {
             dispatch(checkoutSuccess({ paymentId, payerId, userId: userIdParam, receiveAddress, receiveName, receivePhone, note }))
                 .unwrap()
                 .then((data) => {
-                    const newOrderId = data.message.split('Mã đơn hàng: ')[1] || 'N/A';
-                    const totalPrice = calculateTotalPrice(); // Lưu ý: giá trị này có thể không chính xác nếu items đã bị clear, nên lấy từ server trả về nếu có
-                    setOrderInfo({ orderId: newOrderId, totalPrice: 0 }); // Set tạm 0 hoặc lấy từ response
+                    const newOrderId = data.message?.split('Mã đơn hàng: ')[1] || 'N/A';
+                    setOrderInfo({ orderId: newOrderId, totalPrice: 0 });
                     toast.success('Thanh toán PayPal thành công!', { position: 'top-right', autoClose: 3000 });
-                    dispatch(clearCart(user.userId));
+                    if(user?.userId) dispatch(clearCart(user.userId));
                 })
                 .catch((error) => {
                     toast.error(error || 'Xác nhận thanh toán thất bại!', { position: 'top-right', autoClose: 3000 });
                     navigate('/user/cart');
                 });
         } else if (location.pathname.includes('/cancel')) {
-            // Logic hủy PayPal
             toast.info('Thanh toán đã bị hủy!', { position: 'top-right', autoClose: 3000 });
             dispatch(clearCheckoutRedirect());
             navigate('/user/cart');
         }
-    }, [location.pathname, location.search, dispatch, navigate, user?.userId, token]);
+    }, [location.pathname, location.search, dispatch, navigate, user?.userId]);
 
     // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
 
@@ -135,7 +154,6 @@ const CartPage = () => {
                 receivePhone: values.receivePhone,
                 note: values.note || 'Không có ghi chú',
             };
-            const totalPrice = calculateTotalPrice();
 
             if (paymentMethod === 'paypal') {
                 dispatch(checkoutCart(checkoutData))
@@ -149,8 +167,7 @@ const CartPage = () => {
                 dispatch(checkoutCOD(checkoutData))
                     .unwrap()
                     .then((response) => {
-                        setOrderInfo({ orderId: response.orderId, totalPrice });
-                        dispatch(fetchCartItems(user.userId));
+                        // setOrderInfo kích hoạt bởi useEffect orderId
                     })
                     .catch((err) => toast.error(err || 'Lỗi thanh toán COD'))
                     .finally(() => setPaymentLoading(false));
@@ -173,8 +190,11 @@ const CartPage = () => {
 
     if (loading || paymentLoading) {
         return (
-            <div style={{ minHeight: '60vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin size="large" tip="Đang xử lý..." />
+            <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                <Spin size="large" />
+                <div style={{ marginTop: 20, color: '#1890ff', fontSize: '16px', fontWeight: 500 }}>
+                    Đang xử lý...
+                </div>
             </div>
         );
     }
@@ -208,7 +228,7 @@ const CartPage = () => {
                                     <div key={item.cartItemId || item.productId} style={{ padding: '20px', border: '1px solid #f0f0f0', borderRadius: 12, marginBottom: 16, backgroundColor: '#fff' }}>
                                         <Row align="middle" gutter={16}>
                                             <Col xs={8} sm={4}>
-                                                <Image src={item.productImage || 'https://picsum.photos/200'} alt={item.productName} style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: 8 }} preview={false} />
+                                                <Image src={item.productImage || 'https://picsum.photos/200'} alt={item.productName} style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: 8 }} fallback="https://picsum.photos/200" preview={false} />
                                             </Col>
                                             <Col xs={16} sm={10}>
                                                 <Title level={5} style={{ margin: 0, fontSize: 16 }}>{item.productName}</Title>
@@ -238,7 +258,7 @@ const CartPage = () => {
                 {/* Cột phải: Thông tin thanh toán */}
                 <Col xs={24} lg={8}>
                     {items.length > 0 && (
-                        <div style={{ position: 'sticky', top: 100 }}>
+                        <div style={{ position: 'sticky', top: '100px' }}>
                             <Card className="shadow-sm" title={<span style={{fontSize: 18, fontWeight: 'bold'}}><CreditCardOutlined /> Thông tin thanh toán</span>} style={{ borderRadius: 12 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                                     <Text>Tạm tính:</Text>
@@ -251,7 +271,7 @@ const CartPage = () => {
                                 <div style={{ marginBottom: 20, color: '#8c8c8c', textAlign: 'right', fontSize: 12 }}>(~${calculateTotalPriceInUSD()} USD)</div>
                                 <Divider style={{ margin: '15px 0' }} />
                                 
-                                <Form form={form} layout="vertical" onFinish={handleCheckout} initialValues={{ receiveAddress: '', receiveName: '', receivePhone: '', note: '' }}>
+                                <Form form={form} layout="vertical" onFinish={handleCheckout}>
                                     <Form.Item name="receiveName" rules={[{ required: true, message: 'Nhập họ tên!' }]}><Input placeholder="Họ tên người nhận" /></Form.Item>
                                     <Form.Item name="receivePhone" rules={[{ required: true, message: 'Nhập SĐT!' }, { pattern: /^\d{10,11}$/, message: 'SĐT không hợp lệ!' }]}><Input placeholder="Số điện thoại" maxLength={15} /></Form.Item>
                                     <Form.Item name="receiveAddress" rules={[{ required: true, message: 'Nhập địa chỉ!' }]}><Input placeholder="Địa chỉ giao hàng" /></Form.Item>

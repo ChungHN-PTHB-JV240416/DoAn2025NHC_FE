@@ -43,7 +43,7 @@ const CategoryProductsPageUser = () => {
         // [ĐÃ SỬA]: Dùng đúng endpoint số nhiều 'categories' giống code cũ của bạn
         const response = await BASE_URL.get(`/products/categories/${categoryId}`);
         
-        console.log("Dữ liệu category trả về:", response.data); // Debug xem có dữ liệu không
+        // console.log("Dữ liệu category trả về:", response.data); // Debug xem có dữ liệu không
         
         // Xử lý dữ liệu trả về (hỗ trợ cả dạng phân trang .content và dạng mảng thường)
         const productList = response.data.content || response.data || [];
