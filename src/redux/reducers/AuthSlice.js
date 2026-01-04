@@ -110,7 +110,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload.message || 'Đăng xuất thất bại';
         state.validationErrors = {};
-        // console.error('Lỗi đăng xuất trong Redux:', action.payload); // Debug lỗi
+          // console.error('Lỗi đăng xuất trong Redux:', action.payload); // Debug lỗi
       });
   },
 });

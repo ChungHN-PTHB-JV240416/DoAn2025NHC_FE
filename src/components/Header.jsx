@@ -4,14 +4,34 @@ import { FiPhone } from 'react-icons/fi';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+// [MỚI]: Import để lấy trạng thái đăng nhập
+import { useSelector } from 'react-redux';
 
 const Header = () => {
   const navigate = useNavigate();
+  // [MỚI]: Lấy biến isAuthenticated từ Redux
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
-  // Hàm chặn truy cập cho các mục cần bảo mật (Lịch sử, Giỏ hàng)
+  // Hàm xử lý khi bấm vào Giỏ hàng hoặc Lịch sử (ở trang khách)
   const handleRestrictedClick = () => {
-    toast.info('Vui lòng đăng nhập để sử dụng tính năng này!', { position: 'top-right', autoClose: 3000 });
-    navigate('/login');
+    if (isAuthenticated) {
+        // Nếu đã đăng nhập, cho phép chuyển hướng vào trong
+        navigate('/user/cart'); 
+    } else {
+        toast.info('Vui lòng đăng nhập để sử dụng tính năng này!', { position: 'top-right', autoClose: 3000 });
+        navigate('/login');
+    }
+  };
+
+  // [FIX]: Hàm xử lý khi bấm vào icon Người dùng
+  const handleUserClick = () => {
+      if (isAuthenticated) {
+          // Đã đăng nhập -> Chuyển hướng về trang Dashboard User (nơi có HeaderUser và nút Đăng xuất)
+          navigate('/user');
+      } else {
+          // Chưa đăng nhập -> Chuyển hướng sang trang Login
+          navigate('/login');
+      }
   };
 
   return (
@@ -115,8 +135,8 @@ const Header = () => {
               <Nav.Link href="/categories/1" className="nav-link-modern">Phone Main Zin</Nav.Link>
               <Nav.Link href="/categories/2" className="nav-link-modern">Phone Sách Tay</Nav.Link>
               
-              {/* Bắt buộc đăng nhập */}
-              <Nav.Link onClick={handleRestrictedClick} className="nav-link-modern">Lịch sử</Nav.Link>
+              {/* Logic: Nếu click vào Lịch sử ở trang khách -> Check auth */}
+              <Nav.Link onClick={() => isAuthenticated ? navigate('/user/history') : handleRestrictedClick()} className="nav-link-modern">Lịch sử</Nav.Link>
             </Nav>
 
             <div className="d-flex align-items-center">
@@ -125,7 +145,7 @@ const Header = () => {
                 <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>0965.804.364</span>
               </div>
 
-              {/* Cart Button (Giả - Bắt login) */}
+              {/* Cart Button */}
               <div className="action-btn" onClick={handleRestrictedClick}>
                 <div style={{ position: 'relative' }}>
                   <FaShoppingCart color="#fff" size={18} />
@@ -133,8 +153,8 @@ const Header = () => {
                 </div>
               </div>
 
-              {/* User Button (Chuyển sang login) */}
-              <div className="action-btn" onClick={() => navigate('/login')}>
+              {/* [FIX]: User Button (Logic chuyển hướng thông minh) */}
+              <div className="action-btn" onClick={handleUserClick}>
                 <FaUser color="#fff" size={18} />
               </div>
             </div>
